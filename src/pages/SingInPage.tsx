@@ -1,25 +1,31 @@
-import { useState } from "react";
+import {
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+  type FocusEvent,
+} from "react";
 import Button from "@mui/material/Button";
 import Input from "@mui/material/Input";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import toast from "react-hot-toast";
 
-export default function SignUpPage() {
-  const [form, setForm] = useState({
-    nome: "",
+export default function SignInPage() {
+  type FormData = {
+    email: string;
+    senha: string;
+  };
+
+  const [form, setForm] = useState<FormData>({
     email: "",
     senha: "",
   });
 
   const [touched, setTouched] = useState({
-    nome: false,
     email: false,
     senha: false,
   });
 
   const errors = {
-    nome: !form.nome.trim() ? "Nome é obrigatório" : "",
     email: !form.email.trim()
       ? "Email é obrigatório"
       : !/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(form.email)
@@ -32,59 +38,46 @@ export default function SignUpPage() {
       : "",
   };
 
-  const isValid = !errors.nome && !errors.email && !errors.senha;
+  const isValid = !errors.email && !errors.senha;
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+  const formFields = [
+    {
+      label: "Email",
+      name: "email",
+      type: "email",
+      placeholder: "email@exemplo.com",
+      error: errors.email,
+      touched: touched.email,
+    },
+    {
+      label: "Senha",
+      name: "senha",
+      type: "password",
+      placeholder: "••••••••",
+      error: errors.senha,
+      touched: touched.senha,
+    },
+  ] as const;
+
+  function handleChange(e: ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   }
 
-  function handleBlur(e: React.FocusEvent<HTMLInputElement>) {
+  function handleBlur(e: FocusEvent<HTMLInputElement>) {
     const { name } = e.target;
     setTouched((prev) => ({ ...prev, [name]: true }));
   }
 
-  async function fakeApiCall() {
-    return new Promise((resolve) => setTimeout(() => resolve("sucesso"), 2000));
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setTouched({
-      nome: true,
-      email: true,
-      senha: true,
-    });
-
+    setTouched({ email: true, senha: true });
     if (!isValid) return;
-
-    await toast.promise(
-      fakeApiCall(),
-      {
-        loading: "Cadastrando...",
-        success: "Cadastrado com sucesso!",
-        error: "Erro ao cadastrar. Tente novamente.",
-      },
-      {
-        style: {
-          background: "#1f2937", // bg-gray-900
-          color: "#a5f3fc", // text-cyan-300
-          border: "1px solid #0e7490", // cyan-600
-        },
-        iconTheme: {
-          primary: "#06b6d4", // cyan-500
-          secondary: "#f0fdfa",
-        },
-      }
-    );
-
-    // Resetar formulário se quiser
-    // setForm({ nome: "", email: "", senha: "" });
+    alert("Login efetuado com sucesso!");
   }
 
   return (
     <section className="min-h-screen bg-gray-950 flex items-center justify-center p-4 overflow-hidden relative">
-      {/* Efeitos de fundo neon */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-1/4 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/70 to-transparent blur-sm"></div>
         <div className="absolute top-2/3 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-purple-500/70 to-transparent blur-sm"></div>
@@ -113,7 +106,7 @@ export default function SignUpPage() {
                 transition={{ delay: 0.2 }}
                 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 mb-2"
               >
-                Criar Conta
+                Entrar
               </motion.h2>
               <motion.p
                 initial={{ opacity: 0 }}
@@ -121,38 +114,12 @@ export default function SignUpPage() {
                 transition={{ delay: 0.3 }}
                 className="text-sm text-gray-400"
               >
-                Junte-se à nossa plataforma e comece a gerenciar seus eventos
-                profissionalmente
+                Acesse sua conta para gerenciar seus eventos
               </motion.p>
             </div>
 
             <form className="space-y-6" onSubmit={handleSubmit} noValidate>
-              {[
-                {
-                  label: "Nome",
-                  name: "nome",
-                  type: "text",
-                  placeholder: "Seu nome completo",
-                  error: errors.nome,
-                  touched: touched.nome,
-                },
-                {
-                  label: "Email",
-                  name: "email",
-                  type: "email",
-                  placeholder: "email@exemplo.com",
-                  error: errors.email,
-                  touched: touched.email,
-                },
-                {
-                  label: "Senha",
-                  name: "senha",
-                  type: "password",
-                  placeholder: "••••••••",
-                  error: errors.senha,
-                  touched: touched.senha,
-                },
-              ].map((field, index) => (
+              {formFields.map((field, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
@@ -170,7 +137,7 @@ export default function SignUpPage() {
                     name={field.name}
                     type={field.type}
                     placeholder={field.placeholder}
-                    value={form[field.name as keyof typeof form]}
+                    value={form[field.name]}
                     onChange={handleChange}
                     onBlur={handleBlur}
                     className="w-full bg-gray-800/50 border border-gray-700/70 rounded-lg px-4 py-3 placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400/50 transition-all"
@@ -215,7 +182,7 @@ export default function SignUpPage() {
                     },
                   }}
                 >
-                  Cadastrar
+                  Entrar
                 </Button>
               </motion.div>
             </form>
@@ -227,12 +194,12 @@ export default function SignUpPage() {
               className="text-center mt-6"
             >
               <p className="text-xs text-gray-500">
-                Já tem uma conta?{" "}
+                Ainda não tem conta?{" "}
                 <Link
-                  to="/signin"
+                  to="/signup"
                   className="text-cyan-400 hover:text-cyan-300 transition-colors font-medium"
                 >
-                  Entrar agora
+                  Cadastre-se agora
                 </Link>
               </p>
             </motion.div>

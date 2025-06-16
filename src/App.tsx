@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast"; // ✅ importar o Toaster
 import SignUpPage from "./pages/SignUpPage";
 import HomePage from "./pages/HomePage";
+import SignInPage from "./pages/SingInPage";
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/signin" element={<SignInPage />} />
       </Routes>
     </Router>
   );
