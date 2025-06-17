@@ -7,7 +7,8 @@ import {
 import Button from "@mui/material/Button";
 import Input from "@mui/material/Input";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useUserStore, type UserType } from "../store/userStore"; // ajuste o caminho se necessário
 
 export default function SignInPage() {
   type FormData = {
@@ -24,6 +25,9 @@ export default function SignInPage() {
     email: false,
     senha: false,
   });
+
+  const navigate = useNavigate();
+  const setUser = useUserStore((state) => state.setUser);
 
   const errors = {
     email: !form.email.trim()
@@ -73,7 +77,25 @@ export default function SignInPage() {
     e.preventDefault();
     setTouched({ email: true, senha: true });
     if (!isValid) return;
-    alert("Login efetuado com sucesso!");
+
+    // Simulação do login (substituir por chamada à API futuramente)
+    const tipoUsuario: UserType = form.email.includes("org")
+      ? "organizer"
+      : "participant";
+
+    const usuario = {
+      name: "Usuário Exemplo",
+      email: form.email,
+      type: tipoUsuario,
+    };
+
+    setUser(usuario);
+
+    if (tipoUsuario === "organizer") {
+      navigate("/organizer");
+    } else {
+      navigate("/participant");
+    }
   }
 
   return (
