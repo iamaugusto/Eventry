@@ -1,4 +1,4 @@
-import { useState, useEffect, memo } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
@@ -9,13 +9,6 @@ import {
   Divider,
   TextField,
   Avatar,
-  Tooltip,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  CircularProgress,
   Snackbar,
   Alert,
   Skeleton,
@@ -33,153 +26,24 @@ import {
   RateReview,
   CalendarToday,
   Groups,
-  Star,
-  ExitToApp,
   SentimentDissatisfied,
-  Menu,
-  ChevronLeft,
 } from "@mui/icons-material";
 import { Toaster } from "react-hot-toast";
 
-// Tipos TypeScript
-type TabType = 0 | 1 | 2 | 3 | 4 | 5;
-type RatingType = 0 | 1 | 2 | 3 | 4 | 5;
-
-interface EventItem {
-  time: string;
-  title: string;
-  active: boolean;
-}
-
-interface MenuItem {
-  icon: React.ReactNode;
-  label: string;
-  tab: TabType;
-}
-
-interface EventCardProps {
-  title: string;
-  date: string;
-  status: string;
-  statusColor: string;
-  children: React.ReactNode;
-  loading?: boolean;
-}
-
-// Componente de Loading para Cards
-const LoadingCard = () => (
-  <Card className="bg-gray-800/50 border border-gray-700 rounded-xl">
-    <CardContent>
-      <div className="flex justify-between items-start">
-        <div className="w-full">
-          <Skeleton variant="text" width="60%" height={32} />
-          <Skeleton variant="text" width="40%" height={24} />
-        </div>
-        <Skeleton variant="circular" width={40} height={24} />
-      </div>
-      <Divider className="my-4 bg-gray-700" />
-      <Skeleton
-        variant="rectangular"
-        height={100}
-        className="mb-4 rounded-lg"
-      />
-      <div className="flex justify-between">
-        <Skeleton variant="text" width="40%" height={36} />
-        <Skeleton variant="text" width="30%" height={36} />
-      </div>
-    </CardContent>
-  </Card>
-);
-
-// Componente Timeline extraído
-const EventTimeline = ({ items }: { items: EventItem[] }) => (
-  <div className="mt-4">
-    <Typography
-      variant="subtitle2"
-      className="text-cyan-300 mb-2 flex items-center"
-    >
-      Cronograma:
-    </Typography>
-    <div className="space-y-2 pl-4 border-l border-cyan-400/30">
-      {items.map((item, index) => (
-        <motion.div
-          key={index}
-          className="relative"
-          initial={{ opacity: 0, x: -10 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: index * 0.1 }}
-        >
-          <div
-            className={`absolute -left-4 top-1 w-2 h-2 rounded-full ${
-              item.active
-                ? "bg-cyan-400 ring-2 ring-cyan-400/30"
-                : "bg-gray-600"
-            }`}
-          />
-          <Typography
-            variant="body2"
-            className={item.active ? "text-cyan-400" : "text-gray-400"}
-          >
-            {item.time} • {item.title}
-          </Typography>
-        </motion.div>
-      ))}
-    </div>
-  </div>
-);
-
-// Componente EventCard extraído com melhorias de UX
-const EventCard = memo(
-  ({
-    title,
-    date,
-    status,
-    statusColor,
-    children,
-    loading = false,
-  }: EventCardProps) => {
-    if (loading) return <LoadingCard />;
-
-    return (
-      <motion.div
-        whileHover={{ y: -5 }}
-        transition={{ type: "spring", stiffness: 300 }}
-      >
-        <Card
-          className="bg-gray-800/50 border border-gray-700 rounded-xl hover:border-cyan-400/30 transition-colors"
-          aria-labelledby={`event-${title
-            .replace(/\s+/g, "-")
-            .toLowerCase()}-title`}
-        >
-          <CardContent>
-            <div className="flex justify-between items-start">
-              <div>
-                <Typography
-                  id={`event-${title.replace(/\s+/g, "-").toLowerCase()}-title`}
-                  variant="h6"
-                  className="text-white font-semibold"
-                >
-                  {title}
-                </Typography>
-                <Typography variant="body2" className="text-gray-400 mt-1">
-                  {date}
-                </Typography>
-              </div>
-              <span
-                className={`${statusColor} text-xs px-2 py-1 rounded-full transition-opacity hover:opacity-90`}
-                aria-label={`Status: ${status}`}
-              >
-                {status}
-              </span>
-            </div>
-            <Divider className="my-4 bg-gray-700" />
-            {children}
-          </CardContent>
-        </Card>
-      </motion.div>
-    );
-  }
-);
+// Importações dos componentes MVC
+import {
+  LoadingCard,
+  EventTimeline,
+  ParticipantEventCard as EventCard,
+  ParticipantEmptyState as EmptyState,
+  ParticipantSidebar,
+  RatingModal,
+  LogoutConfirmModal,
+  SidebarToggleButton,
+  type TabType,
+  type RatingType,
+  type MenuItem,
+} from "../components";
 
 export default function ParticipantPage() {
   const [tab, setTab] = useState<TabType>(0);
@@ -266,234 +130,19 @@ export default function ParticipantPage() {
     { icon: <Person fontSize="small" />, label: "Minha Conta", tab: 5 },
   ];
 
-  // Componente Sidebar extraído
-  const Sidebar = () => (
-    <motion.aside
-      initial={{ width: sidebarOpen ? 256 : 0 }}
-      animate={{
-        width: sidebarOpen ? 256 : 0,
-        opacity: sidebarOpen ? 1 : 0.8,
-      }}
-      transition={{ duration: 0.3 }}
-      className={`bg-gray-900 border-r border-gray-800 p-6 flex flex-col ${
-        sidebarOpen ? "w-64" : "w-0 overflow-hidden"
-      }`}
-    >
-      <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 mb-8">
-        Eventry
-      </h1>
-
-      {/* Perfil do Usuário */}
-      <motion.div
-        className="flex items-center gap-3 p-3 mb-6 bg-gray-800/50 rounded-lg border border-gray-700"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-      >
-        <Avatar className="w-10 h-10 bg-gradient-to-r from-cyan-500 to-purple-600">
-          JS
-        </Avatar>
-        <div>
-          <Typography className="font-medium text-white">João Silva</Typography>
-          <Typography className="text-xs text-cyan-400">
-            Participante VIP
-          </Typography>
-        </div>
-      </motion.div>
-
-      <nav className="space-y-2 text-gray-300 flex-1">
-        {menuItems.map((item) => (
-          <Tooltip key={item.tab} title={item.label} placement="right" arrow>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setTab(item.tab)}
-              className={`flex items-center gap-3 p-3 rounded-lg transition hover:bg-gray-800 ${
-                tab === item.tab && "bg-gray-800 text-cyan-400"
-              }`}
-              aria-current={tab === item.tab ? "page" : undefined}
-            >
-              {item.icon} {item.label}
-            </motion.button>
-          </Tooltip>
-        ))}
-
-        <div className="mt-auto pt-4 border-t border-gray-800">
-          <div className="flex items-center gap-2 mb-4 text-xs text-gray-400">
-            <span
-              className={`w-2 h-2 rounded-full ${
-                navigator.onLine ? "bg-green-500" : "bg-rose-500"
-              }`}
-            ></span>
-            {navigator.onLine ? "Online" : "Offline"}
-          </div>
-
-          <Tooltip title="Voltar para página inicial" placement="right" arrow>
-            <motion.button
-              whileHover={{ x: 2 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowLogoutConfirm(true)}
-              className="flex items-center gap-3 p-3 rounded-lg transition-all w-full hover:bg-gradient-to-r hover:from-rose-900/30 hover:to-rose-800/20 text-gray-300 hover:text-rose-400"
-              aria-label="Sair da conta"
-            >
-              <ExitToApp
-                fontSize="small"
-                className="hover:scale-110 transition-transform"
-              />
-              <span>Sair</span>
-            </motion.button>
-          </Tooltip>
-        </div>
-      </nav>
-    </motion.aside>
-  );
-
-  // Componente RatingModal extraído
-  const RatingModal = () => (
-    <Dialog
-      open={showRatingModal}
-      onClose={() => setShowRatingModal(false)}
-      PaperProps={{
-        className: "bg-gray-800 text-white",
-      }}
-      aria-labelledby="rating-modal-title"
-      aria-describedby="rating-modal-description"
-    >
-      <DialogTitle id="rating-modal-title" className="border-b border-gray-700">
-        Avaliar Festival de Música
-      </DialogTitle>
-      <DialogContent className="pt-6">
-        <div className="flex justify-center my-4">
-          {[1, 2, 3, 4, 5].map((star) => (
-            <IconButton
-              key={star}
-              onClick={() => setRating(star as RatingType)}
-              aria-label={`Avaliar com ${star} estrela${star > 1 ? "s" : ""}`}
-            >
-              <Star
-                className={`${
-                  star <= rating ? "text-amber-400" : "text-gray-500"
-                } transition-colors`}
-                style={{ fontSize: star === rating ? "2rem" : "1.5rem" }}
-              />
-            </IconButton>
-          ))}
-        </div>
-        <TextField
-          multiline
-          rows={4}
-          fullWidth
-          placeholder="Conte sua experiência..."
-          className="bg-gray-700/50 text-white rounded-lg"
-          aria-label="Comentário sobre o evento"
-        />
-      </DialogContent>
-      <DialogActions className="border-t border-gray-700">
-        <Button
-          onClick={() => setShowRatingModal(false)}
-          className="text-gray-400"
-          aria-label="Cancelar avaliação"
-        >
-          Cancelar
-        </Button>
-        <Button
-          onClick={handleRatingSubmit}
-          className="bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
-          aria-label="Enviar avaliação"
-        >
-          Enviar Avaliação
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-
-  // Componente LogoutConfirmModal extraído
-  const LogoutConfirmModal = () => (
-    <Dialog
-      open={showLogoutConfirm}
-      onClose={() => setShowLogoutConfirm(false)}
-      PaperProps={{
-        className: "bg-gray-800 border border-cyan-500/20 rounded-xl",
-      }}
-      aria-labelledby="logout-modal-title"
-    >
-      <DialogTitle id="logout-modal-title" className="text-cyan-400 font-bold">
-        Sair da conta?
-      </DialogTitle>
-      <DialogContent>
-        <Typography className="text-gray-300">
-          Você será redirecionado para a página inicial
-        </Typography>
-      </DialogContent>
-      <DialogActions>
-        <Button
-          onClick={() => setShowLogoutConfirm(false)}
-          className="text-gray-400 hover:text-white"
-          aria-label="Cancelar logout"
-        >
-          Cancelar
-        </Button>
-        <Button
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-          className="bg-gradient-to-r from-rose-600 to-rose-500 text-white"
-          startIcon={
-            isLoggingOut ? <CircularProgress size={20} color="inherit" /> : null
-          }
-          aria-label="Confirmar logout"
-        >
-          {isLoggingOut ? "Saindo..." : "Confirmar"}
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-
-  // Componente EmptyState para quando não há dados
-  const EmptyState = ({
-    icon,
-    message,
-  }: {
-    icon: React.ReactNode;
-    message: string;
-  }) => (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col items-center justify-center py-12 text-gray-400"
-    >
-      {icon}
-      <Typography className="mt-4">{message}</Typography>
-    </motion.div>
-  );
-
-  // Botão de Toggle para a Sidebar
-  const SidebarToggleButton = () => (
-    <motion.div
-      className={`absolute top-4 ${
-        sidebarOpen ? "left-[17rem]" : "left-4"
-      } z-50`}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ delay: 0.2 }}
-    >
-      <Tooltip title={sidebarOpen ? "Ocultar menu" : "Mostrar menu"}>
-        <IconButton
-          onClick={toggleSidebar}
-          className="bg-gray-800/80 hover:bg-gray-700/80 text-gray-300 border border-gray-700"
-          aria-label={sidebarOpen ? "Ocultar menu" : "Mostrar menu"}
-        >
-          {sidebarOpen ? <ChevronLeft /> : <Menu />}
-        </IconButton>
-      </Tooltip>
-    </motion.div>
-  );
-
   return (
     <section className="min-h-screen flex bg-gray-950 relative">
       <Toaster position="top-right" />
 
-      <Sidebar />
-      <SidebarToggleButton />
+      <ParticipantSidebar
+        sidebarOpen={sidebarOpen}
+        tab={tab}
+        menuItems={menuItems}
+        onTabChange={setTab}
+        onLogout={() => setShowLogoutConfirm(true)}
+      />
+
+      <SidebarToggleButton sidebarOpen={sidebarOpen} onToggle={toggleSidebar} />
 
       {/* Conteúdo Principal com ajuste para sidebar recolhida */}
       <main
@@ -1044,8 +693,20 @@ export default function ParticipantPage() {
         </AnimatePresence>
       </main>
 
-      <RatingModal />
-      <LogoutConfirmModal />
+      <RatingModal
+        open={showRatingModal}
+        rating={rating}
+        onClose={() => setShowRatingModal(false)}
+        onRatingChange={setRating}
+        onSubmit={handleRatingSubmit}
+      />
+
+      <LogoutConfirmModal
+        open={showLogoutConfirm}
+        isLoggingOut={isLoggingOut}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={handleLogout}
+      />
 
       {/* Snackbar para feedback */}
       <Snackbar
